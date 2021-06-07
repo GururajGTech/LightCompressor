@@ -1,15 +1,17 @@
-package com.abedelazizshe.lightcompressorlibrary
+package com.moviemeasure.android.videoComplib
 
 import android.content.Context
 import android.media.*
 import android.media.MediaCodecList.REGULAR_CODECS
 import android.net.Uri
 import android.os.Build
+import android.os.ParcelFileDescriptor
 import android.util.Log
 import androidx.annotation.RequiresApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import java.io.File
+import java.io.FileNotFoundException
 import java.nio.ByteBuffer
 import kotlin.math.roundToInt
 
@@ -73,7 +75,18 @@ object Compressor {
         //Retrieve the source's metadata to be used as input to generate new values for compression
         val mediaMetadataRetriever = MediaMetadataRetriever()
         try {
-            mediaMetadataRetriever.setDataSource(source)
+            if (srcUri != null && srcPath == null){
+                val parcelFileDescriptor: ParcelFileDescriptor?
+                try {
+                    parcelFileDescriptor = context!!.getContentResolver().openFileDescriptor(srcUri!!, "r")
+                    mediaMetadataRetriever.setDataSource(parcelFileDescriptor?.fileDescriptor)
+                } catch (e: FileNotFoundException) {
+                    e.printStackTrace()
+                }
+            }else {
+                mediaMetadataRetriever.setDataSource(source)
+            }
+
         } catch (exception: IllegalArgumentException) {
             return Result(
                 success = false,
@@ -146,8 +159,14 @@ object Compressor {
             180 -> 0
             else -> rotation
         }
-
-        val file = File(source)
+        val file : File
+        if (srcUri != null && srcPath == null)
+        {
+            file = File(srcUri?.path)
+        }else
+        {
+            file = File(source.toString())
+        }
         if (!file.canRead()) return Result(
             success = false,
             failureMessage = "The source file cannot be accessed!"
