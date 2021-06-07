@@ -1,4 +1,4 @@
-package com.moviemeasure.android.videoComplib
+com.abedelazizshe.lightcompressorlibrary
 
 import android.content.Context
 import android.media.*
